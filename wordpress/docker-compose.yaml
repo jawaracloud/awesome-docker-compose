@@ -1,0 +1,70 @@
+name: wordpress-deployment
+services:
+  wordpress-web:
+    image: wordpress:6.7.1-php8.1-apache
+    deploy:
+      replicas: 3
+    restart: always
+    environment:
+      - WORDPRESS_DB_HOST=database
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD=022760266336f122cebf823edcefa84f
+      - WORDPRESS_DB_NAME=wordpress
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - wordpress
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: mysql:9.1.0
+    container_name: database
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=022760266336f122cebf823edcefa84f
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=022760266336f122cebf823edcefa84f
+    volumes:
+      - database-data:/var/lib/mysql
+    networks:
+      - wordpress
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.27.3-alpine
+    container_name: nginx
+    restart: always
+    environment:
+      - DOMAIN=localhost
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/wordpress.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl/default.crt:/etc/nginx/ssl/default.crt
+      - ./nginx/ssl/default.key:/etc/nginx/ssl/default.key
+    networks:
+      - wordpress
+    depends_on:
+      - wordpress-web
+
+networks:
+  wordpress:
+    name: wordpress
+    driver: bridge
+
+volumes:
+  wordpress-data:
+    name: wordpress-data
+    driver: local
+  database-data:
+    name: database-data
+    driver: local

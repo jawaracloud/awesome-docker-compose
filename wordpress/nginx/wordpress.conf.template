@@ -7,17 +7,17 @@ upstream wordpress {
 
 server {
     listen 80;
-    server_name nginx.wordpress-deployment.orb.local;
+    server_name $SERVER_NAME;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name nginx.wordpress-deployment.orb.local;
+    server_name $SERVER_NAME;
 
     # SSL Certificate Paths
-    ssl_certificate /etc/nginx/ssl/default.crt;
-    ssl_certificate_key /etc/nginx/ssl/default.key;
+    ssl_certificate $CRT_PATH;
+    ssl_certificate_key $KEY_PATH;
 
     # Security Headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;

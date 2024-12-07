@@ -1,0 +1,32 @@
+# Cluster Settings
+cluster.name: elasticsearch-local
+node.name: elasticsearch-node-1
+
+# Network Configuration
+network.host: 0.0.0.0
+http.port: 9200
+
+# Node Roles and Discovery
+node.roles: [master, data, ingest]
+discovery.type: single-node
+
+# Security Settings
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: true
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+
+# Performance Tuning
+thread_pool.search.queue_size: 1000
+indices.query.bool.max_clause_count: 8192
+
+# Logging
+path.logs: /usr/share/elasticsearch/logs
+
+# Backup and Snapshot Settings
+path.repo:
+  - /usr/share/elasticsearch/backup
+
+# Memory Settings
+bootstrap.memory_lock: true

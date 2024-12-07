@@ -1,0 +1,147 @@
+name: elastic-kibana-stack
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
+    container_name: elasticsearch
+    env_file:
+      - .env
+    environment:
+      # Cluster and node configuration
+      - cluster.name=elasticsearch-cluster
+      - node.name=elasticsearch-node-1
+      - discovery.type=single-node
+      
+      # Network and security settings
+      - http.host=0.0.0.0
+      - transport.host=0.0.0.0
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      
+      # Memory and performance tuning
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g -XX:+UseCompressedOops -XX:+UseG1GC"
+      
+      # Elastic credentials
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      
+      # Monitoring and logging
+      - xpack.monitoring.collection.enabled=true
+    
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    
+    deploy:
+      resources:
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+        limits:
+          memory: 4G
+          cpus: '1.0'
+    
+    networks:
+      - elk-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:${ELASTIC_PASSWORD:-changeme} -H 'Content-Type: application/json' http://localhost:9200/_cluster/health | grep -q '\"status\":\"\\(green\\|yellow\\)\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+      - ./configs/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elastic-backup:/usr/share/elasticsearch/backup
+      - elastic-logs:/usr/share/elasticsearch/logs
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.16.1
+    container_name: kibana
+    env_file:
+      - .env
+    restart: unless-stopped
+    
+    ports:
+      - "5601:5601"
+    
+    networks:
+      - elk-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -I http://localhost:5601/api/status | grep -q 'HTTP/1.1 200'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    environment:
+      # Elasticsearch connection
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:-changeme}
+      
+      # Server configuration
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      
+      # Security and encryption
+      - XPACK_SECURITY_ENABLED=true
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:-randomkey123}
+      
+      # Monitoring and logging
+      - XPACK_MONITORING_ENABLED=true
+      - XPACK_MONITORING_COLLECTION_ENABLED=true
+    
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - ./configs/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - kibana-logs:/usr/share/kibana/logs
+    
+    deploy:
+      resources:
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+networks:
+  elk-network:
+    driver: bridge
+    name: elk-network
+
+volumes:
+  elastic-data:
+    driver: local
+    name: elastic-data
+  
+  elastic-backup:
+    driver: local
+    name: elastic-backup
+  
+  elastic-logs:
+    driver: local
+    name: elastic-logs
+  
+  kibana-data:
+    driver: local
+    name: kibana-data
+
+  kibana-logs:
+    driver: local
+    name: kibana-logs

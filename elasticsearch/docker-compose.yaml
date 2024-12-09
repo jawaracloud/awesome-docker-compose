@@ -26,7 +26,7 @@ services:
       
       # Monitoring and logging
       - xpack.monitoring.collection.enabled=true
-    
+
     ulimits:
       memlock:
         soft: -1
@@ -101,7 +101,8 @@ services:
       # Monitoring and logging
       - XPACK_MONITORING_ENABLED=true
       - XPACK_MONITORING_COLLECTION_ENABLED=true
-    
+
+      - NODE_OPTIONS=--openssl-legacy-provider
     volumes:
       - kibana-data:/usr/share/kibana/data
       - ./configs/kibana.yml:/usr/share/kibana/config/kibana.yml:ro

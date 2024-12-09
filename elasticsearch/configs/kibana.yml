@@ -6,11 +6,7 @@ server.port: 5601
 # Elasticsearch Connection
 elasticsearch.hosts: ["http://elasticsearch:9200"]
 elasticsearch.username: "kibana_system"
-
-# Security and Encryption
-xpack.security.enabled: true
-xpack.security.session.idleTimeout: "8h"
-xpack.security.session.lifespan: "30d"
+elasticsearch.ssl.verificationMode: "none"
 
 # Monitoring
 monitoring.ui.container.elasticsearch.enabled: true
@@ -19,18 +15,19 @@ xpack.monitoring.enabled: true
 # Saved Objects Encryption
 xpack.encryptedSavedObjects.encryptionKey: "12754b72d79043e273d9ac37da5103684608bc2bb5cd54d4ddb665adc85f4d7d"
 
-# Logging
+# Logging Configuration
 logging:
+  root:
+    level: info
+    appenders: [default, file]
   appenders:
     file:
       type: file
       fileName: /usr/share/kibana/logs/kibana.log
       layout:
         type: json
-  root:
-    appenderRef: file
-    level: info
 
-# Plugins and UI Settings
-telemetry.optIn: false
-telemetry.enabled: false
+# Telemetry Settings
+telemetry:
+  optIn: false
+  enabled: false

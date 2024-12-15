@@ -1,6 +1,7 @@
 name: wordpress-deployment
 services:
   wordpress-web:
+    # image: wordpress:6-php8.1-fpm-alpine
     image: wordpress:6.7.1-php8.1-apache
     deploy:
       replicas: 3
@@ -45,8 +46,8 @@ services:
     restart: unless-stopped
     environment:
       - SERVER_NAME=localhost
-      - CRT_PATH=/etc/nginx/ssl/default.crt
-      - KEY_PATH=/etc/nginx/ssl/default.key
+      # - CRT_PATH=/etc/nginx/ssl/default.crt
+      # - KEY_PATH=/etc/nginx/ssl/default.key
     ports:
       - "80:80"
       - "443:443"
